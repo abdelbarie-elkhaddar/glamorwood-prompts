@@ -41,7 +41,7 @@ app.post('/api/login', (req, res) => {
   if (password === APP_PASSWORD) {
     const token = makeToken(APP_PASSWORD);
     const maxAge = 60 * 60 * 24 * 30; // 30 days
-    res.setHeader('Set-Cookie', `auth_token=${token}; HttpOnly; Path=/; SameSite=Strict; Max-Age=${maxAge}`);
+    res.setHeader('Set-Cookie', `auth_token=${token}; HttpOnly; Secure; Path=/; SameSite=Lax; Max-Age=${maxAge}`);
     res.json({ ok: true });
   } else {
     res.status(401).json({ error: 'كلمة المرور غير صحيحة' });
