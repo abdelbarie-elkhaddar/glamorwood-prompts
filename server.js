@@ -26,8 +26,13 @@ function parseCookies(req) {
 }
 
 function isAuthenticated(req) {
+  const expected = makeToken(APP_PASSWORD);
+  // Check Authorization header (localStorage-based)
+  const authHeader = req.headers['authorization'] || '';
+  if (authHeader.startsWith('Bearer ') && authHeader.slice(7) === expected) return true;
+  // Fallback: cookie
   const { auth_token } = parseCookies(req);
-  return auth_token === makeToken(APP_PASSWORD);
+  return auth_token === expected;
 }
 
 function requireAuth(req, res, next) {
@@ -42,7 +47,7 @@ app.post('/api/login', (req, res) => {
     const token = makeToken(APP_PASSWORD);
     const maxAge = 60 * 60 * 24 * 30; // 30 days
     res.setHeader('Set-Cookie', `auth_token=${token}; HttpOnly; Secure; Path=/; SameSite=Lax; Max-Age=${maxAge}`);
-    res.json({ ok: true });
+    res.json({ ok: true, token });
   } else {
     res.status(401).json({ error: 'كلمة المرور غير صحيحة' });
   }

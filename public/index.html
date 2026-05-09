@@ -553,6 +553,17 @@ let saveTimer = null;
 let editingId = null;
 
 // ── Auth ──────────────────────────────────────────────
+const TOKEN_KEY = 'prompts_auth_token';
+
+function getToken() { return localStorage.getItem(TOKEN_KEY); }
+function setToken(t) { localStorage.setItem(TOKEN_KEY, t); }
+function clearToken() { localStorage.removeItem(TOKEN_KEY); }
+
+function authHeaders(extra) {
+  const t = getToken();
+  return { 'Content-Type': 'application/json', ...(t ? { 'Authorization': 'Bearer ' + t } : {}), ...extra };
+}
+
 function showLogin() {
   document.getElementById('loginOverlay').style.display = 'flex';
   document.getElementById('loginError').textContent = '';
@@ -573,6 +584,8 @@ async function doLogin() {
     body: JSON.stringify({ password })
   });
   if (res.ok) {
+    const data = await res.json();
+    setToken(data.token);
     hideLogin();
     loadFromServer();
   } else {
@@ -584,6 +597,7 @@ async function doLogin() {
 }
 
 async function logout() {
+  clearToken();
   await fetch('/api/logout', { method: 'POST' });
   showLogin();
 }
@@ -591,8 +605,8 @@ async function logout() {
 // ── API ──────────────────────────────────────────────
 async function loadFromServer() {
   try {
-    const res = await fetch('/api/scenes');
-    if (res.status === 401) { showLogin(); return; }
+    const res = await fetch('/api/scenes', { headers: authHeaders({}) });
+    if (res.status === 401) { clearToken(); showLogin(); return; }
     const data = await res.json();
     scenes = data.scenes || [];
     nextId = data.nextId || 100;
@@ -608,10 +622,10 @@ async function saveToServer() {
   try {
     const res = await fetch('/api/scenes', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders({}),
       body: JSON.stringify({ scenes, nextId })
     });
-    if (res.status === 401) { showLogin(); return; }
+    if (res.status === 401) { clearToken(); showLogin(); return; }
     if (res.ok) setSaveStatus('saved', 'محفوظ ✓');
     else setSaveStatus('error', 'فشل الحفظ');
   } catch(e) {
