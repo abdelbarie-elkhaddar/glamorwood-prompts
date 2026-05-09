@@ -412,7 +412,7 @@
     inset: 0;
     background: var(--bg);
     z-index: 999;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     padding: 1.5rem;
@@ -830,7 +830,11 @@ function showToast(msg) {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
 // ── Init ──────────────────────────────────────────────
-loadFromServer();
+if (!getToken()) {
+  showLogin();
+} else {
+  loadFromServer();
+}
 </script>
 </body>
 </html>
