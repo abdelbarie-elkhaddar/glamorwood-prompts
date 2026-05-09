@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artwork Scene Prompts</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0e0d;
+    --surface: #1a1917;
+    --surface2: #242220;
+    --surface3: #2e2c29;
+    --border: #3a3835;
+    --border2: #4a4845;
+    --gold: #c9a84c;
+    --gold-light: #e8c87a;
+    --gold-dim: #7a6330;
+    --text: #f0ece4;
+    --text2: #a09890;
+    --text3: #6a6460;
+    --s-color: #2d5a3d;
+    --s-text: #7ecf9a;
+    --m-color: #5a4a1a;
+    --m-text: #e8c060;
+    --l-color: #5a2a1a;
+    --l-text: #e88060;
+    --e-color: #2a3a5a;
+    --e-text: #7aaae8;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    gap: 12px;
+  }
+
+  .header-title { font-size: 16px; font-weight: 600; color: var(--gold); letter-spacing: 0.02em; }
+  .header-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  .header-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+
+  /* Save status */
+  .save-status {
+    font-size: 11px;
+    color: var(--text3);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: color 0.3s;
+  }
+  .save-status.saving { color: var(--m-text); }
+  .save-status.saved { color: var(--s-text); }
+  .save-status.error { color: var(--l-text); }
+  .save-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* Buttons */
+  .btn {
+    font-family: inherit;
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--surface3); color: var(--text); border-color: var(--border2); }
+  .btn-gold { background: var(--gold); color: #0f0e0d; border-color: var(--gold); font-weight: 600; }
+  .btn-gold:hover { background: var(--gold-light); border-color: var(--gold-light); color: #0f0e0d; }
+  .btn-danger { color: #e87070; border-color: #5a2020; }
+  .btn-danger:hover { background: #2a1515; border-color: #8a3030; color: #f09090; }
+
+  /* Filter bar */
+  .filter-bar {
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .filter-label { font-size: 12px; color: var(--text3); }
+
+  .filter-btn {
+    font-family: inherit;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text3);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-btn:hover { color: var(--text); border-color: var(--border2); }
+  .filter-btn.f-all.active { border-color: var(--gold-dim); background: rgba(201,168,76,0.1); color: var(--gold); }
+  .filter-btn.f-s.active  { border-color: var(--s-color); background: rgba(45,90,61,0.2); color: var(--s-text); }
+  .filter-btn.f-m.active  { border-color: var(--m-color); background: rgba(90,74,26,0.2); color: var(--m-text); }
+  .filter-btn.f-l.active  { border-color: var(--l-color); background: rgba(90,42,26,0.2); color: var(--l-text); }
+  .filter-btn.f-e.active  { border-color: var(--e-color); background: rgba(42,58,90,0.2); color: var(--e-text); }
+
+  .search-input {
+    font-family: inherit;
+    font-size: 13px;
+    padding: 5px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    outline: none;
+    width: 200px;
+    margin-right: auto;
+  }
+  .search-input::placeholder { color: var(--text3); }
+  .search-input:focus { border-color: var(--border2); }
+
+  /* Stats */
+  .stats-bar {
+    padding: 0.5rem 1.5rem;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--text3);
+    flex-wrap: wrap;
+  }
+  .stat-item { display: flex; align-items: center; gap: 5px; }
+  .stat-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .dot-s { background: var(--s-text); }
+  .dot-m { background: var(--m-text); }
+  .dot-l { background: var(--l-text); }
+  .dot-e { background: var(--e-text); }
+
+  /* Grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    padding: 1.5rem;
+  }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--border2); }
+
+  /* Square image area */
+  .card-img-area {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    position: relative;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+    background: var(--surface2);
+  }
+
+  .card-img-area img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .card-img-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .card-img-placeholder:hover { background: var(--surface3); }
+  .card-img-placeholder svg { opacity: 0.25; }
+  .card-img-placeholder span { font-size: 12px; color: var(--text3); }
+
+  .img-remove {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.75);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #e87070;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .card-img-area:hover .img-remove { opacity: 1; }
+
+  /* Card body */
+  .card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+
+  .card-header { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+  .size-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    letter-spacing: 0.04em;
+  }
+  .badge-s { background: var(--s-color); color: var(--s-text); }
+  .badge-m { background: var(--m-color); color: var(--m-text); }
+  .badge-l { background: var(--l-color); color: var(--l-text); }
+  .badge-e { background: var(--e-color); color: var(--e-text); }
+
+  .room-badge {
+    font-size: 11px;
+    color: var(--text3);
+    background: var(--surface2);
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  .card-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    outline: none;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    width: 100%;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+  .card-name:hover { background: var(--surface2); }
+  .card-name:focus { background: var(--surface2); color: var(--gold-light); }
+
+  .prompt-box {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text2);
+    line-height: 1.7;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    outline: none;
+    min-height: 90px;
+    resize: none;
+    width: 100%;
+    direction: ltr;
+    text-align: left;
+    transition: border-color 0.15s;
+  }
+  .prompt-box:focus { border-color: var(--gold-dim); color: var(--text); }
+
+  .card-actions { display: flex; gap: 6px; margin-top: auto; padding-top: 4px; }
+
+  .copy-btn {
+    flex: 1;
+    font-family: inherit;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--gold-dim);
+    background: rgba(201,168,76,0.08);
+    color: var(--gold);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .copy-btn:hover { background: rgba(201,168,76,0.18); }
+  .copy-btn.copied { border-color: var(--s-color); background: rgba(45,90,61,0.2); color: var(--s-text); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 500px;
+    transform: translateY(16px);
+    transition: transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal-title { font-size: 15px; font-weight: 600; color: var(--gold); margin-bottom: 1.25rem; }
+
+  .form-group { margin-bottom: 12px; }
+  .form-label { font-size: 12px; color: var(--text3); margin-bottom: 4px; display: block; }
+
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 7px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--gold-dim); }
+  .form-select option { background: var(--surface2); }
+
+  .form-textarea {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    min-height: 130px;
+    resize: vertical;
+    direction: ltr;
+    text-align: left;
+  }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.25rem; }
+
+  /* Empty */
+  .empty { grid-column: 1/-1; text-align: center; padding: 4rem 2rem; color: var(--text3); }
+  .empty-icon { font-size: 40px; opacity: 0.3; margin-bottom: 1rem; }
+  .empty p { font-size: 14px; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-size: 13px;
+    padding: 9px 20px;
+    border-radius: 20px;
+    z-index: 300;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .file-input { display: none; }
+
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: 1fr; padding: 1rem; gap: 12px; }
+    .header { padding: 0.75rem 1rem; }
+    .filter-bar { padding: 0.6rem 1rem; }
+    .search-input { width: 100%; margin-right: 0; }
+    .form-row { grid-template-columns: 1fr; }
+    .header-actions .btn span { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">🖼 Artwork Scene Prompts</div>
+    <div class="header-sub">مكتبة مشاهد اللوحات الجدارية</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;flex:1;justify-content:center;">
+    <div class="save-status" id="saveStatus">
+      <span class="save-dot"></span>
+      <span id="saveText">محفوظ</span>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-gold" onclick="openAddModal()">+ <span>إضافة مشهد</span></button>
+  </div>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+
+<div class="filter-bar">
+  <span class="filter-label">عرض:</span>
+  <button class="filter-btn f-all active" onclick="setFilter('all', this)">الكل</button>
+  <button class="filter-btn f-s" onclick="setFilter('s', this)">S — صغير</button>
+  <button class="filter-btn f-m" onclick="setFilter('m', this)">M — متوسط</button>
+  <button class="filter-btn f-l" onclick="setFilter('l', this)">L — كبير</button>
+  <button class="filter-btn f-e" onclick="setFilter('e', this)">✨ تحسين اللوحة</button>
+  <input type="text" class="search-input" placeholder="بحث..." id="searchInput" oninput="renderCards()" dir="rtl">
+</div>
+
+<div class="grid" id="grid"></div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal" onclick="closeModalOnBg(event)">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">إضافة مشهد جديد</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">اسم المشهد</label>
+        <input type="text" class="form-input" id="fName" placeholder="مثال: فوق الكرسي">
+      </div>
+      <div class="form-group">
+        <label class="form-label">الوصف / الغرفة</label>
+        <input type="text" class="form-input" id="fRoom" placeholder="مثال: غرفة معيشة">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">التاغ</label>
+      <select class="form-select" id="fSize">
+        <option value="s">S — صغير</option>
+        <option value="m" selected>M — متوسط</option>
+        <option value="l">L — كبير</option>
+        <option value="e">✨ تحسين اللوحة</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">نص الـ Prompt</label>
+      <textarea class="form-textarea" id="fPrompt" placeholder="Place this exact artwork..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">إلغاء</button>
+      <button class="btn btn-gold" onclick="saveScene()">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let scenes = [];
+let nextId = 100;
+let currentFilter = 'all';
+let saveTimer = null;
+let editingId = null;
+
+// ── API ──────────────────────────────────────────────
+async function loadFromServer() {
+  try {
+    const res = await fetch('/api/scenes');
+    const data = await res.json();
+    scenes = data.scenes || [];
+    nextId = data.nextId || 100;
+    renderCards();
+  } catch(e) {
+    showToast('⚠️ تعذر الاتصال بالسيرفر');
+    setSaveStatus('error', 'خطأ في الاتصال');
+  }
+}
+
+async function saveToServer() {
+  setSaveStatus('saving', 'جاري الحفظ...');
+  try {
+    const res = await fetch('/api/scenes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scenes, nextId })
+    });
+    if (res.ok) setSaveStatus('saved', 'محفوظ ✓');
+    else setSaveStatus('error', 'فشل الحفظ');
+  } catch(e) {
+    setSaveStatus('error', 'خطأ في الحفظ');
+  }
+}
+
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  setSaveStatus('saving', 'سيتم الحفظ...');
+  saveTimer = setTimeout(saveToServer, 1200);
+}
+
+function setSaveStatus(type, msg) {
+  const el = document.getElementById('saveStatus');
+  el.className = 'save-status ' + type;
+  document.getElementById('saveText').textContent = msg;
+}
+
+// ── Filter ───────────────────────────────────────────
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderCards();
+}
+
+function getFiltered() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  return scenes.filter(s => {
+    const matchFilter = currentFilter === 'all' || s.size === currentFilter;
+    const matchSearch = !q || s.name.toLowerCase().includes(q) || (s.room||'').toLowerCase().includes(q) || s.prompt.toLowerCase().includes(q);
+    return matchFilter && matchSearch;
+  });
+}
+
+// ── Render ───────────────────────────────────────────
+function renderStats() {
+  const counts = { s:0, m:0, l:0, e:0 };
+  scenes.forEach(s => { if (counts[s.size] !== undefined) counts[s.size]++; });
+  document.getElementById('statsBar').innerHTML = `
+    <span class="stat-item"><span class="stat-dot" style="background:var(--text3)"></span>${scenes.length} إجمالي</span>
+    <span class="stat-item"><span class="stat-dot dot-s"></span>S: ${counts.s}</span>
+    <span class="stat-item"><span class="stat-dot dot-m"></span>M: ${counts.m}</span>
+    <span class="stat-item"><span class="stat-dot dot-l"></span>L: ${counts.l}</span>
+    <span class="stat-item"><span class="stat-dot dot-e"></span>تحسين: ${counts.e}</span>
+  `;
+}
+
+function badgeClass(size) {
+  return { s:'badge-s', m:'badge-m', l:'badge-l', e:'badge-e' }[size] || 'badge-m';
+}
+
+function badgeLabel(size) {
+  return { s:'S', m:'M', l:'L', e:'✨' }[size] || size.toUpperCase();
+}
+
+function escHtml(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderCards() {
+  const filtered = getFiltered();
+  const grid = document.getElementById('grid');
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><p>لا توجد نتائج</p></div>`;
+    renderStats(); return;
+  }
+
+  grid.innerHTML = filtered.map(s => {
+    const imgContent = s.image
+      ? `<img src="${s.image}" alt="${escHtml(s.name)}">
+         <button class="img-remove" onclick="removeImage(${s.id})">×</button>`
+      : `<label class="card-img-placeholder" for="img-${s.id}">
+           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+           <span>رفع صورة النتيجة</span>
+           <input type="file" id="img-${s.id}" accept="image/*" class="file-input" onchange="uploadImage(${s.id}, event)">
+         </label>`;
+
+    return `
+    <div class="card" id="card-${s.id}">
+      <div class="card-img-area">${imgContent}</div>
+      <div class="card-body">
+        <div class="card-header">
+          <span class="size-badge ${badgeClass(s.size)}">${badgeLabel(s.size)}</span>
+          <span class="room-badge">${escHtml(s.room||'')}</span>
+        </div>
+        <input class="card-name" value="${escHtml(s.name)}"
+          onblur="updateField(${s.id},'name',this.value)"
+          placeholder="اسم المشهد">
+        <textarea class="prompt-box" rows="5"
+          onblur="updateField(${s.id},'prompt',this.value)"
+        >${escHtml(s.prompt)}</textarea>
+        <div class="card-actions">
+          <button class="copy-btn" onclick="copyPrompt(${s.id},this)">نسخ الـ prompt</button>
+          <button class="btn" style="padding:6px 10px" onclick="openEditModal(${s.id})">✏️</button>
+          <button class="btn btn-danger" style="padding:6px 10px" onclick="deleteScene(${s.id})">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  renderStats();
+}
+
+// ── CRUD ─────────────────────────────────────────────
+function updateField(id, field, value) {
+  const scene = scenes.find(s => s.id === id);
+  if (scene) { scene[field] = value; scheduleSave(); }
+}
+
+function copyPrompt(id, btn) {
+  const scene = scenes.find(s => s.id === id);
+  if (!scene) return;
+  navigator.clipboard.writeText(scene.prompt).then(() => {
+    btn.textContent = '✓ تم النسخ';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'نسخ الـ prompt'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function uploadImage(id, event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const scene = scenes.find(s => s.id === id);
+    if (scene) { scene.image = e.target.result; scheduleSave(); renderCards(); showToast('تم رفع الصورة ✓'); }
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeImage(id) {
+  const scene = scenes.find(s => s.id === id);
+  if (scene) { scene.image = null; scheduleSave(); renderCards(); }
+}
+
+function deleteScene(id) {
+  if (!confirm('حذف هذا المشهد؟')) return;
+  scenes = scenes.filter(s => s.id !== id);
+  scheduleSave();
+  renderCards();
+  showToast('تم الحذف');
+}
+
+// ── Modal ─────────────────────────────────────────────
+function openAddModal() {
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'إضافة مشهد جديد';
+  document.getElementById('fName').value = '';
+  document.getElementById('fRoom').value = '';
+  document.getElementById('fSize').value = 'm';
+  document.getElementById('fPrompt').value = 'Place this exact artwork ';
+  document.getElementById('modal').classList.add('open');
+  setTimeout(() => document.getElementById('fName').focus(), 200);
+}
+
+function openEditModal(id) {
+  const s = scenes.find(s => s.id === id);
+  if (!s) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'تعديل المشهد';
+  document.getElementById('fName').value = s.name;
+  document.getElementById('fRoom').value = s.room || '';
+  document.getElementById('fSize').value = s.size;
+  document.getElementById('fPrompt').value = s.prompt;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function closeModalOnBg(e) { if (e.target.id === 'modal') closeModal(); }
+
+function saveScene() {
+  const name = document.getElementById('fName').value.trim();
+  const room = document.getElementById('fRoom').value.trim();
+  const size = document.getElementById('fSize').value;
+  const prompt = document.getElementById('fPrompt').value.trim();
+  if (!name || !prompt) { showToast('⚠️ الاسم والـ prompt مطلوبان'); return; }
+
+  if (editingId) {
+    const scene = scenes.find(s => s.id === editingId);
+    if (scene) Object.assign(scene, { name, room, size, prompt });
+    showToast('تم التحديث ✓');
+  } else {
+    scenes.push({ id: nextId++, size, name, room, prompt, image: null });
+    showToast('تمت الإضافة ✓');
+  }
+
+  scheduleSave();
+  renderCards();
+  closeModal();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── Init ──────────────────────────────────────────────
+loadFromServer();
+</script>
+</body>
+</html>
