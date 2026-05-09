@@ -405,6 +405,61 @@
     .form-row { grid-template-columns: 1fr; }
     .header-actions .btn span { display: none; }
   }
+
+  /* Login screen */
+  .login-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 2rem;
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+  }
+  .login-icon { font-size: 36px; margin-bottom: 0.75rem; }
+  .login-title { font-size: 18px; font-weight: 600; color: var(--gold); margin-bottom: 0.4rem; }
+  .login-sub { font-size: 12px; color: var(--text3); margin-bottom: 1.5rem; }
+  .login-input {
+    width: 100%;
+    font-family: inherit;
+    font-size: 15px;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    outline: none;
+    text-align: center;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+    transition: border-color 0.15s;
+  }
+  .login-input:focus { border-color: var(--gold-dim); }
+  .login-btn {
+    width: 100%;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: var(--gold);
+    color: #0f0e0d;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .login-btn:hover { background: var(--gold-light); }
+  .login-error { font-size: 12px; color: var(--l-text); margin-top: 10px; min-height: 18px; }
 </style>
 </head>
 <body>
@@ -422,6 +477,7 @@
   </div>
   <div class="header-actions">
     <button class="btn btn-gold" onclick="openAddModal()">+ <span>إضافة مشهد</span></button>
+    <button class="btn" onclick="logout()" title="تسجيل الخروج">⎋</button>
   </div>
 </div>
 
@@ -475,6 +531,20 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Login overlay -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-icon">🔒</div>
+    <div class="login-title">Artwork Scene Prompts</div>
+    <div class="login-sub">أدخل كلمة المرور للدخول</div>
+    <input class="login-input" type="password" id="loginPassword"
+      placeholder="••••••••"
+      onkeydown="if(event.key==='Enter') doLogin()">
+    <button class="login-btn" onclick="doLogin()">دخول</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
 <script>
 let scenes = [];
 let nextId = 100;
@@ -482,10 +552,47 @@ let currentFilter = 'all';
 let saveTimer = null;
 let editingId = null;
 
+// ── Auth ──────────────────────────────────────────────
+function showLogin() {
+  document.getElementById('loginOverlay').style.display = 'flex';
+  document.getElementById('loginError').textContent = '';
+  document.getElementById('loginPassword').value = '';
+  setTimeout(() => document.getElementById('loginPassword').focus(), 100);
+}
+
+function hideLogin() {
+  document.getElementById('loginOverlay').style.display = 'none';
+}
+
+async function doLogin() {
+  const password = document.getElementById('loginPassword').value;
+  if (!password) return;
+  const res = await fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password })
+  });
+  if (res.ok) {
+    hideLogin();
+    loadFromServer();
+  } else {
+    const data = await res.json();
+    document.getElementById('loginError').textContent = data.error || 'كلمة مرور خاطئة';
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginPassword').focus();
+  }
+}
+
+async function logout() {
+  await fetch('/api/logout', { method: 'POST' });
+  showLogin();
+}
+
 // ── API ──────────────────────────────────────────────
 async function loadFromServer() {
   try {
     const res = await fetch('/api/scenes');
+    if (res.status === 401) { showLogin(); return; }
     const data = await res.json();
     scenes = data.scenes || [];
     nextId = data.nextId || 100;
@@ -504,6 +611,7 @@ async function saveToServer() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ scenes, nextId })
     });
+    if (res.status === 401) { showLogin(); return; }
     if (res.ok) setSaveStatus('saved', 'محفوظ ✓');
     else setSaveStatus('error', 'فشل الحفظ');
   } catch(e) {
